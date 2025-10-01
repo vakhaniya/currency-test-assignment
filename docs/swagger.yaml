@@ -1,0 +1,123 @@
+definitions:
+  currency.CreateRateRequest:
+    properties:
+      baseCurrency:
+        $ref: '#/definitions/currency.CurrencyCode'
+      resultCurrency:
+        $ref: '#/definitions/currency.CurrencyCode'
+    required:
+    - baseCurrency
+    - resultCurrency
+    type: object
+  currency.CreateRateResponse:
+    properties:
+      id:
+        type: string
+    type: object
+  currency.CurrencyCode:
+    enum:
+    - USD
+    - EUR
+    - MXN
+    type: string
+    x-enum-varnames:
+    - USD
+    - EUR
+    - MXN
+  currency.GetCurrencyResponse:
+    properties:
+      baseCurrency:
+        $ref: '#/definitions/currency.CurrencyCode'
+      completedAt:
+        type: string
+      rate:
+        type: number
+      resultCurrency:
+        $ref: '#/definitions/currency.CurrencyCode'
+    type: object
+info:
+  contact: {}
+paths:
+  /v1/currencies:
+    post:
+      consumes:
+      - application/json
+      description: Create currency rate
+      parameters:
+      - description: Idempotency key for request
+        in: header
+        name: Idempotency-Key
+        required: true
+        type: string
+      - description: Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/currency.CreateRateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/currency.CreateRateResponse'
+      summary: Create currency rate
+      tags:
+      - currency
+  /v1/currencies/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get currency rate by id
+      parameters:
+      - description: Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/currency.GetCurrencyResponse'
+      summary: Get currency rate by id
+      tags:
+      - currency
+  /v1/currencies/actual:
+    get:
+      consumes:
+      - application/json
+      description: Get actual currency rate by currency code
+      parameters:
+      - description: Currency Code
+        enum:
+        - USD
+        - EUR
+        - MXN
+        in: query
+        name: baseCurrency
+        required: true
+        type: string
+      - description: Currency Code
+        enum:
+        - USD
+        - EUR
+        - MXN
+        in: query
+        name: resultCurrency
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/currency.GetCurrencyResponse'
+      summary: Get actual currency rate
+      tags:
+      - currency
+swagger: "2.0"

@@ -1,0 +1,185 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/v1/currencies": {
+            "post": {
+                "description": "Create currency rate",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "currency"
+                ],
+                "summary": "Create currency rate",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Idempotency key for request",
+                        "name": "Idempotency-Key",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/currency.CreateRateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/currency.CreateRateResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/currencies/actual": {
+            "get": {
+                "description": "Get actual currency rate by currency code",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "currency"
+                ],
+                "summary": "Get actual currency rate",
+                "parameters": [
+                    {
+                        "enum": [
+                            "USD",
+                            "EUR",
+                            "MXN"
+                        ],
+                        "type": "string",
+                        "description": "Currency Code",
+                        "name": "baseCurrency",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "USD",
+                            "EUR",
+                            "MXN"
+                        ],
+                        "type": "string",
+                        "description": "Currency Code",
+                        "name": "resultCurrency",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/currency.GetCurrencyResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/currencies/{id}": {
+            "get": {
+                "description": "Get currency rate by id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "currency"
+                ],
+                "summary": "Get currency rate by id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/currency.GetCurrencyResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "currency.CreateRateRequest": {
+            "type": "object",
+            "required": [
+                "baseCurrency",
+                "resultCurrency"
+            ],
+            "properties": {
+                "baseCurrency": {
+                    "$ref": "#/definitions/currency.CurrencyCode"
+                },
+                "resultCurrency": {
+                    "$ref": "#/definitions/currency.CurrencyCode"
+                }
+            }
+        },
+        "currency.CreateRateResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "currency.CurrencyCode": {
+            "type": "string",
+            "enum": [
+                "USD",
+                "EUR",
+                "MXN"
+            ],
+            "x-enum-varnames": [
+                "USD",
+                "EUR",
+                "MXN"
+            ]
+        },
+        "currency.GetCurrencyResponse": {
+            "type": "object",
+            "properties": {
+                "baseCurrency": {
+                    "$ref": "#/definitions/currency.CurrencyCode"
+                },
+                "completedAt": {
+                    "type": "string"
+                },
+                "rate": {
+                    "type": "number"
+                },
+                "resultCurrency": {
+                    "$ref": "#/definitions/currency.CurrencyCode"
+                }
+            }
+        }
+    }
+}
