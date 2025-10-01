@@ -20,9 +20,9 @@ func CreateCronJob(ctx context.Context, interval time.Duration, job func(ctx con
 				return
 			case <-ticker.C:
 				func() {
-                    defer HandleRecover()
-                    job(tracing.WithTraceID(ctx, tracing.NewTraceID()))
-                }()
+					defer HandleRecover()
+					job(tracing.WithTraceID(ctx, tracing.NewTraceID()))
+				}()
 			}
 		}
 	}()
