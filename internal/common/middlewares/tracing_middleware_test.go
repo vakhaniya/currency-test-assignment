@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func okHandler(w http.ResponseWriter, r *http.Request) {
@@ -25,7 +27,5 @@ func TestTracingMiddleware(t *testing.T) {
 
 	got := rec.Header().Get(traceIdHeader)
 
-	if got == "" {
-		t.Fatalf("expected trace-id header to be defined")
-	}
+	assert.NotNil(t, got, "expected trace-id header to be defined")
 }

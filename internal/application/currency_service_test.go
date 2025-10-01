@@ -8,6 +8,8 @@ import (
 
 	error_utils "currency-rate-app/internal/common/error-utils"
 	"currency-rate-app/internal/domains/currency"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type mockRepo struct {
@@ -51,12 +53,11 @@ func TestCurrencyService_GetActualRate(t *testing.T) {
 	service := NewCurrencyService(repo)
 
 	res, err := service.GetActualRate(ctx, currency.USD, currency.EUR)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if res.BaseCurrency != currency.USD || res.ResultCurrency != currency.EUR || res.Rate == nil || *res.Rate != rate {
-		t.Fatalf("unexpected result: %+v", res)
-	}
+
+	assert.Nil(t, err, "unexpected error")
+	assert.Equal(t, res.BaseCurrency, currency.USD)
+	assert.Equal(t, res.ResultCurrency, currency.EUR)
+	assert.Equal(t, *res.Rate, rate)
 }
 
 func TestCurrencyService_GetCompletedRateById(t *testing.T) {
@@ -74,7 +75,7 @@ func TestCurrencyService_GetCompletedRateById(t *testing.T) {
 		{"pending", &currency.CurrencyRate{Status: currency.CurrencyRateStatusPending}, nil, currency.ErrCurrencyRateNotCompletedYet()},
 		{"processing", &currency.CurrencyRate{Status: currency.CurrencyRateStatusProcessing}, nil, currency.ErrCurrencyRateNotCompletedYet()},
 		{"failed", &currency.CurrencyRate{Status: currency.CurrencyRateStatusFailed}, nil, currency.ErrCurrencyRateFetchFailed()},
-		{"unknown_status", &currency.CurrencyRate{Status: "SOMETHING"}, nil, error_utils.ErrInternalServerError("error")},
+		{"unknown_status", &currency.CurrencyRate{Status: "SOMETHING"}, nil, error_utils.ErrInternalServerError("inconsistent entity state")},
 		{"repo_error", nil, errors.New("query_error"), errors.New("query_error")},
 	}
 
@@ -93,19 +94,12 @@ func TestCurrencyService_GetCompletedRateById(t *testing.T) {
 			res, err := service.GetCompletedRateById(ctx, "id")
 
 			if tt.expectErr != nil {
-				if err == nil {
-					t.Fatalf("expected error, got nil")
-				}
+				assert.Equal(t, tt.expectErr, err)
 				return
 			}
 
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-
-			if res == nil || res.Rate == nil || *res.Rate != rate {
-				t.Fatalf("unexpected res: %+v", res)
-			}
+			assert.Nil(t, err)
+			assert.Equal(t, rate, *res.Rate)
 		})
 	}
 }
@@ -121,12 +115,12 @@ func TestCurrencyService_CreateRate(t *testing.T) {
 
 	service := NewCurrencyService(repo)
 	res, err := service.CreateRate(ctx, currency.USD, currency.MXN, "idem")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if res.Id == "" || res.IdempotencyKey != "idem" || res.BaseCurrency != currency.USD || res.ResultCurrency != currency.MXN {
-		t.Fatalf("unexpected result: %+v", res)
-	}
+
+	assert.Nil(t, err)
+	assert.Equal(t, "qid", res.Id)
+	assert.Equal(t, "idem", res.IdempotencyKey)
+	assert.Equal(t, currency.USD, res.BaseCurrency)
+	assert.Equal(t, currency.MXN, res.ResultCurrency)
 }
 
 func testTime() (t time.Time) {

@@ -119,7 +119,7 @@ func (c *CurrencyController) createCurrencyRateHandler(w http.ResponseWriter, r 
 	}
 
 	if err := currency.ValidateCurrencyPair(dto.BaseCurrency, dto.ResultCurrency); err != nil {
-		http_server.SendErrorResponse(w, error_utils.ErrValidationError(err.Error()))
+		http_server.SendErrorResponse(w, err)
 
 		return
 	}

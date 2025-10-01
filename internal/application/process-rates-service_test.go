@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"currency-rate-app/internal/domains/currency"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type mockCurrencyRepository struct {
@@ -111,9 +113,15 @@ func TestProcessRates_SuccessfulProcessing(t *testing.T) {
 
 	service.ProcessRates(ctx, 10)
 
-	if len(savedRates) != 2 {
-		t.Fatalf("Expected 2 saved rates, got %d", len(savedRates))
+	expected := []struct {
+		ids  []string
+		rate float64
+	}{
+		{ids: []string{"1"}, rate: 0.85},
+		{ids: []string{"2"}, rate: 20.5},
 	}
+
+	assert.Equal(t, expected, savedRates, "updated entities do not match")
 }
 
 func TestProcessRates_CurrencyPairNotFound(t *testing.T) {
@@ -154,9 +162,9 @@ func TestProcessRates_CurrencyPairNotFound(t *testing.T) {
 
 	service.ProcessRates(ctx, 10)
 
-	if len(failedIds) != 1 || failedIds[0] != "1" {
-		t.Errorf("Expected failed ID [1], got %v", failedIds)
-	}
+	expected := []string{"1"}
+
+	assert.Equal(t, expected, failedIds, "failed entities ids do not match")
 }
 
 func TestGroupRates(t *testing.T) {
@@ -190,34 +198,24 @@ func TestGroupRates(t *testing.T) {
 
 	grouped := groupRates(rates)
 
-	if len(grouped) != 2 {
-		t.Fatalf("Expected 2 base currencies, got %d", len(grouped))
+	expected := map[currency.CurrencyCode][]currencyPairGroup{
+		currency.USD: {
+			{Ids: []string{"1", "4"}, ResultCurrency: currency.EUR},
+			{Ids: []string{"2"}, ResultCurrency: currency.MXN},
+		},
+		currency.EUR: {
+			{Ids: []string{"3"}, ResultCurrency: currency.USD},
+		},
 	}
 
-	usdGroup, exists := grouped[currency.USD]
-	if !exists {
-		t.Fatal("USD group not found")
-	}
-	if len(usdGroup) != 2 {
-		t.Fatalf("Expected 2 currency pairs for USD, got %d", len(usdGroup))
-	}
-
-	eurGroup, exists := grouped[currency.EUR]
-	if !exists {
-		t.Fatal("EUR group not found")
-	}
-	if len(eurGroup) != 1 {
-		t.Fatalf("Expected 1 currency pair for EUR, got %d", len(eurGroup))
-	}
+	assert.Equal(t, expected, grouped)
 }
 
 func TestGroupRates_EmptySlice(t *testing.T) {
 	rates := []currency.CurrencyRate{}
 	grouped := groupRates(rates)
 
-	if len(grouped) != 0 {
-		t.Errorf("Expected empty map, got %d items", len(grouped))
-	}
+	assert.Equal(t, len(grouped), 0, "expected empty map")
 }
 
 func TestFlattenString(t *testing.T) {
@@ -237,18 +235,13 @@ func TestFlattenString(t *testing.T) {
 	}
 
 	flattened := flattenGroupIds(items)
-
-	expectedLength := 6
-	if len(flattened) != expectedLength {
-		t.Fatalf("Expected %d, got %d", expectedLength, len(flattened))
-	}
+	expected := []string{"1", "2", "3", "4", "5", "6"}
+	assert.ElementsMatch(t, expected, flattened, "slices do not match")
 }
 
 func TestFlattenString_EmptySlice(t *testing.T) {
 	items := []currencyPairGroup{}
 	flattened := flattenGroupIds(items)
 
-	if len(flattened) != 0 {
-		t.Errorf("Expected empty slice, got %d items", len(flattened))
-	}
+	assert.Equal(t, len(flattened), 0, "expected empty slice")
 }

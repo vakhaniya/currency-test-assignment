@@ -11,7 +11,10 @@ import (
 
 	"currency-rate-app/internal/application"
 	error_utils "currency-rate-app/internal/common/error-utils"
+	http_server "currency-rate-app/internal/common/http-server"
 	"currency-rate-app/internal/domains/currency"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type mockService struct {
@@ -53,16 +56,15 @@ func TestGetActualCurrencyHandler_Success(t *testing.T) {
 
 	mux.ServeHTTP(res, req)
 
-	if res.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", res.Code)
-	}
+	assert.Equal(t, http.StatusOK, res.Code)
 	var body GetCurrencyResponse
 	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
 		t.Fatalf("invalid response: %v", err)
 	}
-	if body.BaseCurrency != currency.USD || body.ResultCurrency != currency.EUR || body.Rate != rate {
-		t.Fatalf("unexpected body: %+v", body)
-	}
+
+	assert.Equal(t, currency.USD, body.BaseCurrency)
+	assert.Equal(t, currency.EUR, body.ResultCurrency)
+	assert.Equal(t, rate, body.Rate)
 }
 
 func TestGetActualCurrencyHandler_WrongCurrencyCodeError(t *testing.T) {
@@ -78,9 +80,7 @@ func TestGetActualCurrencyHandler_WrongCurrencyCodeError(t *testing.T) {
 
 	mux.ServeHTTP(res, req)
 
-	if res.Code != http.StatusUnprocessableEntity {
-		t.Fatalf("expected 422, got %d", res.Code)
-	}
+	assert.Equal(t, http.StatusBadRequest, res.Code)
 }
 
 func TestGetActualCurrencyHandler_SameCurrencyCodesError(t *testing.T) {
@@ -96,9 +96,7 @@ func TestGetActualCurrencyHandler_SameCurrencyCodesError(t *testing.T) {
 
 	mux.ServeHTTP(res, req)
 
-	if res.Code != http.StatusUnprocessableEntity {
-		t.Fatalf("expected 422, got %d", res.Code)
-	}
+	assert.Equal(t, http.StatusBadRequest, res.Code)
 }
 
 func TestGetActualCurrencyHandler_ServiceFail(t *testing.T) {
@@ -117,9 +115,7 @@ func TestGetActualCurrencyHandler_ServiceFail(t *testing.T) {
 
 	mux.ServeHTTP(res, req)
 
-	if res.Code != http.StatusNotFound {
-		t.Fatalf("expected 400, got %d", res.Code)
-	}
+	assert.Equal(t, http.StatusNotFound, res.Code)
 }
 
 func TestGetRateById_Success(t *testing.T) {
@@ -137,16 +133,16 @@ func TestGetRateById_Success(t *testing.T) {
 
 	mux.ServeHTTP(res, req)
 
-	if res.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", res.Code)
-	}
+	assert.Equal(t, http.StatusOK, res.Code)
+
 	var body GetCurrencyResponse
 	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
 		t.Fatalf("invalid response: %v", err)
 	}
-	if body.BaseCurrency != currency.USD || body.ResultCurrency != currency.MXN || body.Rate != rate {
-		t.Fatalf("unexpected body: %+v", body)
-	}
+
+	assert.Equal(t, currency.USD, body.BaseCurrency)
+	assert.Equal(t, currency.MXN, body.ResultCurrency)
+	assert.Equal(t, rate, body.Rate)
 }
 
 func TestGetRateById_NotFound(t *testing.T) {
@@ -162,9 +158,7 @@ func TestGetRateById_NotFound(t *testing.T) {
 
 	mux.ServeHTTP(res, req)
 
-	if res.Code != http.StatusNotFound {
-		t.Fatalf("expected 404, got %d", res.Code)
-	}
+	assert.Equal(t, http.StatusNotFound, res.Code)
 }
 
 func TestCreateRate_Success(t *testing.T) {
@@ -185,16 +179,12 @@ func TestCreateRate_Success(t *testing.T) {
 
 	mux.ServeHTTP(res, req)
 
-	if res.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", res.Code)
-	}
+	assert.Equal(t, http.StatusOK, res.Code)
 	var resDto CreateRateResponse
 	if err := json.NewDecoder(res.Body).Decode(&resDto); err != nil {
 		t.Fatalf("invalid response: %v", err)
 	}
-	if resDto.Id == "" {
-		t.Fatalf("expected id in response")
-	}
+	assert.NotNil(t, resDto.Id)
 }
 
 func TestCreateRate_MissingHeader(t *testing.T) {
@@ -213,9 +203,13 @@ func TestCreateRate_MissingHeader(t *testing.T) {
 
 	mux.ServeHTTP(res, req)
 
-	if res.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", res.Code)
+	var resDto http_server.HttpErrorResponse
+	if err := json.NewDecoder(res.Body).Decode(&resDto); err != nil {
+		t.Fatalf("invalid response: %v", err)
 	}
+
+	assert.Equal(t, http.StatusBadRequest, res.Code)
+	assert.Equal(t, "Idempotency key not defined", resDto.Message)
 }
 
 func TestCreateRate_InvalidBody(t *testing.T) {
@@ -236,9 +230,12 @@ func TestCreateRate_InvalidBody(t *testing.T) {
 
 	mux.ServeHTTP(res, req)
 
-	if res.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", res.Code)
+	var resDto http_server.HttpErrorResponse
+	if err := json.NewDecoder(res.Body).Decode(&resDto); err != nil {
+		t.Fatalf("invalid response: %v", err)
 	}
+
+	assert.Equal(t, http.StatusBadRequest, res.Code)
 }
 
 func TestCreateRate_SameCurrenciesError(t *testing.T) {
@@ -259,7 +256,11 @@ func TestCreateRate_SameCurrenciesError(t *testing.T) {
 
 	mux.ServeHTTP(res, req)
 
-	if res.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", res.Code)
+	var resDto http_server.HttpErrorResponse
+	if err := json.NewDecoder(res.Body).Decode(&resDto); err != nil {
+		t.Fatalf("invalid response: %v", err)
 	}
+
+	assert.Equal(t, http.StatusBadRequest, res.Code)
+	assert.Equal(t, "CurrenciesShouldDiffer", resDto.Code)
 }

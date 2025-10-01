@@ -6,14 +6,14 @@ import (
 
 func ErrInvalidCurrencyCode() *error_utils.CustomError {
 	return &error_utils.CustomError{
-		ErrorType: error_utils.ErrorCodeBusinessLogic,
+		ErrorType: error_utils.ErrorCodeBadRequest,
 		Code:      "InvalidCurrencyCode",
 	}
 }
 
 func ErrCurrenciesShouldDiffer() *error_utils.CustomError {
 	return &error_utils.CustomError{
-		ErrorType: error_utils.ErrorCodeBusinessLogic,
+		ErrorType: error_utils.ErrorCodeBadRequest,
 		Code:      "CurrenciesShouldDiffer",
 	}
 }
