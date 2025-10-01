@@ -8,8 +8,6 @@ import (
 )
 
 func CreateCronJob(ctx context.Context, interval time.Duration, job func(ctx context.Context)) context.CancelFunc {
-	defer HandleRecover()
-
 	ctx, cancel := context.WithCancel(ctx)
 
 	go func() {
@@ -21,7 +19,10 @@ func CreateCronJob(ctx context.Context, interval time.Duration, job func(ctx con
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				job(tracing.WithTraceID(ctx, tracing.NewTraceID()))
+				func() {
+                    defer HandleRecover()
+                    job(tracing.WithTraceID(ctx, tracing.NewTraceID()))
+                }()
 			}
 		}
 	}()

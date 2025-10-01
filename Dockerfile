@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . .
 
 RUN make setup
-RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd
+RUN make build-ci
 
 FROM alpine:3.22.1
 
