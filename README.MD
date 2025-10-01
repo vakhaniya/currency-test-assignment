@@ -31,6 +31,11 @@
 
 Сваггер доступен на /swagger
 
+**Роуты:**
+- POST /v1/currencies - принимает задание на получение котировки по паре валют, возвращает id сущности
+- GET /v1/currencies/actual - возвращает актуальный курс по паре валют
+- GET /v1/currencies/{id} - получить курс по id сущности из метода POST
+
 ## Стэк
 Реализовано на net/http + gorm (postgres), используется go-playground/validator, swaggo, cleanenv
 
